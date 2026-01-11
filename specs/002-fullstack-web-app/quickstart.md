@@ -1,0 +1,635 @@
+# Quickstart Guide: Phase II Full-Stack Todo App
+
+**Feature**: Full-Stack Todo Web Application
+**Date**: 2026-01-03
+**Target Audience**: Developers setting up local development environment
+
+## Overview
+
+This guide provides step-by-step instructions for setting up and running the Phase II full-stack todo application locally. The setup includes:
+- Backend FastAPI server with Neon PostgreSQL
+- Frontend Next.js application
+- Better Auth integration for authentication
+- Local development workflow
+
+**Estimated Setup Time**: 30-45 minutes
+
+---
+
+## Prerequisites
+
+Before starting, ensure you have the following installed:
+
+### Required Software
+
+| Tool | Minimum Version | Purpose | Installation Link |
+|------|----------------|---------|-------------------|
+| Python | 3.11+ | Backend runtime | https://www.python.org/downloads/ |
+| Node.js | 18+ | Frontend runtime | https://nodejs.org/en/download/ |
+| npm or yarn | Latest | JavaScript package manager | Comes with Node.js |
+| Git | 2.0+ | Version control | https://git-scm.com/downloads/ |
+
+### Required Accounts
+
+1. **Neon Account** (free tier):
+   - Sign up at https://neon.tech
+   - Create a new project
+   - Note the connection string
+
+2. **Better Auth Account**:
+   - Sign up at https://betterauth.com (or equivalent)
+   - Create a new application
+   - Note the API keys
+
+### Verify Prerequisites
+
+```bash
+# Check Python version
+python --version  # Should be 3.11 or higher
+
+# Check Node.js version
+node --version    # Should be 18 or higher
+
+# Check npm version
+npm --version
+
+# Check Git
+git --version
+```
+
+---
+
+## Project Structure
+
+After setup, your project will have this structure:
+
+```
+todo-app/
+├── backend/          # FastAPI backend
+│   ├── src/          # Source code
+│   ├── tests/        # Backend tests
+│   ├── requirements.txt
+│   └── .env          # Backend environment variables
+├── frontend/         # Next.js frontend
+│   ├── src/          # Source code
+│   ├── tests/        # Frontend tests
+│   ├── package.json
+│   └── .env.local    # Frontend environment variables
+└── README.md
+```
+
+---
+
+## Step 1: Clone Repository
+
+```bash
+# Clone the repository
+git clone <repository-url>
+cd todo-app
+
+# Checkout the Phase II branch
+git checkout 002-fullstack-web-app
+```
+
+---
+
+## Step 2: Backend Setup
+
+### 2.1 Navigate to Backend Directory
+
+```bash
+cd backend
+```
+
+### 2.2 Create Python Virtual Environment
+
+```bash
+# Create virtual environment
+python -m venv venv
+
+# Activate virtual environment
+# On Windows:
+venv\Scripts\activate
+
+# On macOS/Linux:
+source venv/bin/activate
+```
+
+### 2.3 Install Dependencies
+
+```bash
+# Install Python packages
+pip install -r requirements.txt
+
+# Expected packages:
+# - fastapi
+# - sqlmodel
+# - pydantic
+# - better-auth-sdk (or equivalent)
+# - psycopg2-binary (PostgreSQL driver)
+# - alembic (database migrations)
+# - pytest (testing)
+# - uvicorn (ASGI server)
+```
+
+### 2.4 Configure Environment Variables
+
+Create `.env` file in the `backend/` directory:
+
+```bash
+# Copy the example file
+cp .env.example .env
+
+# Edit .env with your actual values
+nano .env  # or use your preferred editor
+```
+
+**Required Environment Variables** (`.env`):
+
+```env
+# Database
+DATABASE_URL=postgresql://[user]:[password]@[neon-hostname]/[database]?sslmode=require
+
+# Better Auth
+BETTER_AUTH_API_KEY=your_better_auth_api_key
+BETTER_AUTH_APP_ID=your_better_auth_app_id
+
+# Application
+APP_NAME=Todo API
+DEBUG=True
+SECRET_KEY=your-secret-key-for-sessions-change-in-production
+
+# CORS (allow frontend origin)
+CORS_ORIGINS=http://localhost:3000
+
+# Server
+HOST=0.0.0.0
+PORT=8000
+```
+
+**How to get Neon DATABASE_URL**:
+1. Log in to Neon console (https://console.neon.tech)
+2. Select your project
+3. Go to "Connection Details"
+4. Copy the connection string (ensure `sslmode=require` is included)
+
+### 2.5 Initialize Database
+
+```bash
+# Run database migrations to create tables
+alembic upgrade head
+
+# Expected output:
+# INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+# INFO  [alembic.runtime.migration] Will assume transactional DDL.
+# INFO  [alembic.runtime.migration] Running upgrade  -> 001, create users and todos tables
+```
+
+### 2.6 Start Backend Server
+
+```bash
+# Start FastAPI development server
+uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
+
+# Expected output:
+# INFO:     Will watch for changes in these directories: ['D:\\...\\backend']
+# INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+# INFO:     Started reloader process [12345] using WatchFiles
+# INFO:     Started server process [12346]
+# INFO:     Waiting for application startup.
+# INFO:     Application startup complete.
+```
+
+### 2.7 Verify Backend
+
+Open a new terminal and test the backend:
+
+```bash
+# Check health endpoint (if implemented)
+curl http://localhost:8000/
+
+# Check API documentation (auto-generated by FastAPI)
+# Open in browser: http://localhost:8000/docs
+```
+
+---
+
+## Step 3: Frontend Setup
+
+### 3.1 Navigate to Frontend Directory
+
+Open a new terminal:
+
+```bash
+cd todo-app/frontend
+```
+
+### 3.2 Install Dependencies
+
+```bash
+# Install Node packages
+npm install
+
+# or with yarn:
+yarn install
+
+# Expected packages:
+# - next
+# - react
+# - react-dom
+# - typescript
+# - better-auth-client (or equivalent)
+# - tailwindcss
+```
+
+### 3.3 Configure Environment Variables
+
+Create `.env.local` file in the `frontend/` directory:
+
+```bash
+# Copy the example file
+cp .env.local.example .env.local
+
+# Edit .env.local with your actual values
+nano .env.local  # or use your preferred editor
+```
+
+**Required Environment Variables** (`.env.local`):
+
+```env
+# API Backend URL
+NEXT_PUBLIC_API_URL=http://localhost:8000
+
+# Better Auth
+NEXT_PUBLIC_BETTER_AUTH_APP_ID=your_better_auth_app_id
+BETTER_AUTH_API_KEY=your_better_auth_api_key
+
+# Application
+NEXT_PUBLIC_APP_NAME=Todo App
+```
+
+### 3.4 Start Frontend Server
+
+```bash
+# Start Next.js development server
+npm run dev
+
+# or with yarn:
+yarn dev
+
+# Expected output:
+# - ready started server on 0.0.0.0:3000, url: http://localhost:3000
+# - info  - Using external babel configuration from .babelrc (if exists)
+# - event - compiled client and server successfully in XXXms
+# - wait  - compiling...
+# - event - compiled client and server successfully in XXms
+```
+
+### 3.5 Verify Frontend
+
+```bash
+# Open in browser:
+http://localhost:3000
+
+# You should see the homepage (redirect to signin/signup)
+```
+
+---
+
+## Step 4: Test the Full Stack
+
+### 4.1 Create a User Account
+
+1. Open browser: http://localhost:3000
+2. Navigate to "Sign Up" page
+3. Enter email and password (min 8 characters)
+4. Click "Sign Up"
+5. Should redirect to sign in page with success message
+
+### 4.2 Sign In
+
+1. On sign in page, enter your credentials
+2. Click "Sign In"
+3. Should redirect to `/todos` page
+
+### 4.3 Create a Todo
+
+1. On todos page, click "Add Todo" button
+2. Enter title and optional description
+3. Click "Create"
+4. Todo should appear in the list
+
+### 4.4 Test CRUD Operations
+
+- **View**: Todos list should show all your todos
+- **Update**: Click edit button, modify title/description, save
+- **Toggle**: Click checkbox to mark todo complete/incomplete
+- **Delete**: Click delete button, confirm deletion
+
+### 4.5 Test Data Isolation
+
+1. Sign out
+2. Create a second user account
+3. Sign in with second user
+4. Verify that you don't see first user's todos
+5. Create todos for second user
+6. Sign back in with first user
+7. Verify first user only sees their own todos
+
+---
+
+## Step 5: Run Tests
+
+### 5.1 Backend Tests
+
+```bash
+# Navigate to backend directory
+cd backend
+
+# Activate virtual environment if not already active
+source venv/bin/activate  # or venv\Scripts\activate on Windows
+
+# Run pytest
+pytest
+
+# Run with coverage
+pytest --cov=src --cov-report=html
+
+# Expected output:
+# ============================= test session starts ==============================
+# collected XX items
+#
+# tests/unit/test_todo_service.py ........                                 [ 50%]
+# tests/integration/test_todo_api.py ........                              [100%]
+#
+# ============================== XX passed in X.XXs ===============================
+```
+
+### 5.2 Frontend Tests
+
+```bash
+# Navigate to frontend directory
+cd frontend
+
+# Run Jest tests
+npm test
+
+# or with yarn:
+yarn test
+
+# Run with coverage
+npm test -- --coverage
+
+# Expected output:
+# PASS  tests/components/TodoList.test.tsx
+# PASS  tests/components/TodoItem.test.tsx
+#
+# Test Suites: X passed, X total
+# Tests:       XX passed, XX total
+```
+
+---
+
+## Troubleshooting
+
+### Backend Issues
+
+**Problem**: `ModuleNotFoundError: No module named 'fastapi'`
+**Solution**:
+```bash
+# Ensure virtual environment is activated
+source venv/bin/activate  # or venv\Scripts\activate on Windows
+
+# Reinstall dependencies
+pip install -r requirements.txt
+```
+
+**Problem**: `Connection refused` to Neon database
+**Solution**:
+```bash
+# Check DATABASE_URL in .env
+# Ensure sslmode=require is present
+# Verify Neon project is active in console
+# Check if your IP is allowed in Neon firewall settings
+```
+
+**Problem**: `alembic: command not found`
+**Solution**:
+```bash
+# Install alembic
+pip install alembic
+
+# Or ensure it's in requirements.txt
+```
+
+### Frontend Issues
+
+**Problem**: `Cannot find module 'next'`
+**Solution**:
+```bash
+# Delete node_modules and package-lock.json
+rm -rf node_modules package-lock.json
+
+# Reinstall dependencies
+npm install
+```
+
+**Problem**: `CORS error` when calling backend API
+**Solution**:
+```bash
+# Verify CORS_ORIGINS in backend .env includes http://localhost:3000
+# Restart backend server after changing .env
+```
+
+**Problem**: `Authentication not working`
+**Solution**:
+```bash
+# Check Better Auth API keys in both frontend and backend .env files
+# Ensure backend Better Auth middleware is configured
+# Check browser console for error messages
+```
+
+### Database Issues
+
+**Problem**: `relation "users" does not exist`
+**Solution**:
+```bash
+# Run database migrations
+cd backend
+alembic upgrade head
+```
+
+**Problem**: `password authentication failed for user`
+**Solution**:
+```bash
+# Verify DATABASE_URL credentials in .env
+# Check Neon console for correct username/password
+# Ensure connection string format is correct
+```
+
+### Common Errors
+
+**Error**: `Port 8000 already in use`
+**Solution**:
+```bash
+# Find and kill the process using port 8000
+# On Windows:
+netstat -ano | findstr :8000
+taskkill /PID <PID> /F
+
+# On macOS/Linux:
+lsof -ti:8000 | xargs kill -9
+```
+
+**Error**: `Port 3000 already in use`
+**Solution**:
+```bash
+# Use a different port
+npm run dev -- -p 3001
+
+# Or kill the process using port 3000 (same as above)
+```
+
+---
+
+## Development Workflow
+
+### Typical Development Session
+
+1. **Start Backend**:
+   ```bash
+   cd backend
+   source venv/bin/activate
+   uvicorn src.main:app --reload
+   ```
+
+2. **Start Frontend** (new terminal):
+   ```bash
+   cd frontend
+   npm run dev
+   ```
+
+3. **Make Changes**:
+   - Backend changes auto-reload with `--reload` flag
+   - Frontend changes auto-reload with Next.js hot reload
+
+4. **Test Changes**:
+   - Backend: `pytest`
+   - Frontend: `npm test`
+
+5. **View API Docs**:
+   - Open http://localhost:8000/docs for interactive API documentation
+
+### Database Migrations
+
+When you modify database models:
+
+```bash
+cd backend
+
+# Generate migration
+alembic revision --autogenerate -m "description of changes"
+
+# Apply migration
+alembic upgrade head
+
+# Rollback migration (if needed)
+alembic downgrade -1
+```
+
+---
+
+## Useful Commands
+
+### Backend
+
+```bash
+# Start server
+uvicorn src.main:app --reload
+
+# Run tests
+pytest
+
+# Run tests with coverage
+pytest --cov=src
+
+# Generate migration
+alembic revision --autogenerate -m "message"
+
+# Apply migrations
+alembic upgrade head
+
+# Rollback migration
+alembic downgrade -1
+
+# Format code
+black src/
+
+# Lint code
+flake8 src/
+```
+
+### Frontend
+
+```bash
+# Start dev server
+npm run dev
+
+# Build for production
+npm run build
+
+# Start production server
+npm start
+
+# Run tests
+npm test
+
+# Run tests with coverage
+npm test -- --coverage
+
+# Lint code
+npm run lint
+
+# Format code
+npm run format
+```
+
+---
+
+## Next Steps
+
+After successful setup:
+
+1. **Explore API Documentation**: http://localhost:8000/docs
+2. **Read Architecture Documentation**: See `plan.md` for architecture details
+3. **Review Data Model**: See `data-model.md` for database schema
+4. **Check API Contracts**: See `contracts/openapi.yaml` for full API specification
+5. **Start Development**: Begin implementing tasks from `tasks.md`
+
+---
+
+## Additional Resources
+
+- **FastAPI Documentation**: https://fastapi.tiangolo.com/
+- **Next.js Documentation**: https://nextjs.org/docs
+- **SQLModel Documentation**: https://sqlmodel.tiangolo.com/
+- **Neon Documentation**: https://neon.tech/docs/introduction
+- **Better Auth Documentation**: (Check Better Auth official docs)
+- **Tailwind CSS Documentation**: https://tailwindcss.com/docs
+
+---
+
+## Getting Help
+
+If you encounter issues not covered in this guide:
+
+1. Check the troubleshooting section above
+2. Review error messages carefully
+3. Check browser console for frontend errors
+4. Check terminal output for backend errors
+5. Verify all environment variables are set correctly
+6. Ensure all prerequisites are installed with correct versions
+
+---
+
+**Setup Complete!** You're now ready to develop the Phase II full-stack todo application.

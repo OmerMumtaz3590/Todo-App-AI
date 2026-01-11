@@ -1,9 +1,23 @@
 # Feature Specification: [FEATURE NAME]
 
-**Feature Branch**: `[###-feature-name]`  
-**Created**: [DATE]  
-**Status**: Draft  
+**Feature Branch**: `[###-feature-name]`
+**Created**: [DATE]
+**Status**: Draft
 **Input**: User description: "$ARGUMENTS"
+
+## Constitution Compliance
+
+**Target Phase**: [Phase I | II | III | IV | V]
+
+**Pre-Specification Gate** (per Constitution Section VII):
+- [ ] Request aligns with current phase scope
+- [ ] No future-phase features requested
+- [ ] Requirements are clear and unambiguous
+
+**Phase Constraints Verified** (per Constitution Section III):
+- [ ] Only phase-appropriate features specified
+- [ ] No references to future-phase technologies
+- [ ] Scope boundaries respected
 
 ## User Scenarios & Testing *(mandatory)*
 

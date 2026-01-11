@@ -1,0 +1,29 @@
+# FastAPI Backend Dependencies - Phase II
+# Core Framework
+fastapi
+uvicorn[standard]
+python-multipart
+
+# Database and ORM
+sqlmodel
+psycopg[binary]
+alembic
+
+# Validation and Configuration
+pydantic>=2.0
+pydantic-settings
+python-dotenv
+email-validator
+
+# Authentication
+passlib[bcrypt]
+python-jose[cryptography]
+
+# Testing
+pytest
+pytest-cov
+httpx
+
+# Development
+black
+flake8

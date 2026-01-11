@@ -12,6 +12,20 @@ description: "Task list template for feature implementation"
 
 **Organization**: Tasks are grouped by user story to enable independent implementation and testing of each story.
 
+## Constitution Compliance
+
+**Pre-Task Gate** (per Constitution Section VII):
+- [ ] Plan is approved (RULE SDD-005)
+- [ ] Constitution Check in plan passes
+- [ ] Technical context is complete
+- [ ] Project structure is defined
+
+**Agent Behavior Rules** (per Constitution Section II):
+- [ ] All tasks trace to specification requirements (RULE ABR-002)
+- [ ] No feature invention in task list (RULE ABR-002)
+- [ ] No future-phase work included (RULE ABR-006)
+- [ ] All tasks have clear, verifiable deliverables (RULE ABR-008)
+
 ## Format: `[ID] [P?] [Story] Description`
 
 - **[P]**: Can run in parallel (different files, no dependencies)

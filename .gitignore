@@ -1,0 +1,54 @@
+# Backend - Python
+backend/__pycache__/
+backend/*.py[cod]
+backend/venv/
+backend/.env
+backend/.env.local
+backend/*.log
+backend/.pytest_cache/
+backend/htmlcov/
+backend/.coverage
+
+# Frontend - Node.js/Next.js
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/build/
+frontend/dist/
+frontend/.env.local
+frontend/.env.*.local
+frontend/*.log
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+
+# Testing
+.coverage
+coverage/
+*.cover
+.pytest_cache/
+
+# Logs
+logs/
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+.cache/

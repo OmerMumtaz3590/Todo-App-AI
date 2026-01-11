@@ -31,7 +31,23 @@
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-[Gates determined based on constitution file]
+**Phase Compliance** (per Constitution Section III):
+- [ ] Current phase identified: [Phase I | II | III | IV | V]
+- [ ] No future-phase technologies used (RULE PG-002)
+- [ ] Architecture appropriate for current phase (RULE PG-003)
+
+**Spec-Driven Compliance** (per Constitution Section I):
+- [ ] Specification approved before this plan (RULE SDD-004)
+- [ ] No features beyond specification scope (RULE SDD-002)
+
+**Technology Compliance** (per Constitution Section IV):
+- [ ] Only phase-appropriate technologies used (RULE TC-001)
+- [ ] Additional libraries justified (RULE TC-003)
+
+**Quality Compliance** (per Constitution Section V):
+- [ ] Clean architecture principles followed (RULE QP-001 to QP-004)
+- [ ] Type hints planned for all public functions (RULE QP-008)
+- [ ] Error handling strategy defined (RULE QP-009)
 
 ## Project Structure
 

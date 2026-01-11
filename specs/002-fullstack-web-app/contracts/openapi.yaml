@@ -1,0 +1,643 @@
+openapi: 3.0.3
+info:
+  title: Todo API - Phase II
+  description: |
+    RESTful API for the Phase II Full-Stack Todo Web Application.
+
+    This API provides authentication endpoints and full CRUD operations for todo management.
+    All todo endpoints require authentication via session cookie.
+
+    Phase II features:
+    - User signup/signin with Better Auth
+    - Create, read, update, delete todos
+    - Toggle todo completion status
+    - Data isolation (users can only access their own todos)
+  version: 1.0.0
+  contact:
+    name: Evolution of Todo Project
+servers:
+  - url: http://localhost:8000
+    description: Local development server
+  - url: https://api.todo-app.example.com
+    description: Production server (placeholder)
+
+tags:
+  - name: Authentication
+    description: User authentication endpoints (signup, signin, signout)
+  - name: Todos
+    description: Todo CRUD operations (requires authentication)
+
+paths:
+  /auth/signup:
+    post:
+      summary: Create new user account
+      description: Register a new user with email and password. Password is hashed before storage.
+      tags:
+        - Authentication
+      operationId: signup
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SignupRequest'
+            examples:
+              validSignup:
+                summary: Valid signup request
+                value:
+                  email: user@example.com
+                  password: SecurePass123
+      responses:
+        '201':
+          description: User account created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SignupResponse'
+              examples:
+                success:
+                  summary: Successful signup
+                  value:
+                    message: Account created successfully
+                    user_id: 550e8400-e29b-41d4-a716-446655440000
+        '400':
+          description: Invalid request (validation error)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalidEmail:
+                  summary: Invalid email format
+                  value:
+                    error: Invalid email format
+                passwordTooShort:
+                  summary: Password too short
+                  value:
+                    error: Password must be at least 8 characters
+        '409':
+          description: Email already registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                emailExists:
+                  summary: Email already exists
+                  value:
+                    error: Email already registered
+
+  /auth/signin:
+    post:
+      summary: Authenticate user
+      description: Sign in with email and password. Returns session cookie on success.
+      tags:
+        - Authentication
+      operationId: signin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SigninRequest'
+            examples:
+              validSignin:
+                summary: Valid signin request
+                value:
+                  email: user@example.com
+                  password: SecurePass123
+      responses:
+        '200':
+          description: Authentication successful
+          headers:
+            Set-Cookie:
+              description: Session cookie (HTTP-only, Secure, SameSite)
+              schema:
+                type: string
+                example: session=abc123; HttpOnly; Secure; SameSite=Lax; Max-Age=86400
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SigninResponse'
+              examples:
+                success:
+                  summary: Successful signin
+                  value:
+                    message: Signed in successfully
+                    user:
+                      id: 550e8400-e29b-41d4-a716-446655440000
+                      email: user@example.com
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalidCredentials:
+                  summary: Invalid email or password
+                  value:
+                    error: Invalid email or password
+
+  /auth/signout:
+    post:
+      summary: End user session
+      description: Sign out the authenticated user and clear session cookie.
+      tags:
+        - Authentication
+      operationId: signout
+      security:
+        - sessionCookie: []
+      responses:
+        '200':
+          description: Signed out successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+              examples:
+                success:
+                  summary: Successful signout
+                  value:
+                    message: Signed out successfully
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                notAuthenticated:
+                  summary: No active session
+                  value:
+                    error: Not authenticated
+
+  /todos:
+    get:
+      summary: Get all user todos
+      description: Retrieve all todos for the authenticated user, ordered by creation date (newest first).
+      tags:
+        - Todos
+      operationId: getTodos
+      security:
+        - sessionCookie: []
+      responses:
+        '200':
+          description: List of todos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TodoListResponse'
+              examples:
+                withTodos:
+                  summary: User with todos
+                  value:
+                    todos:
+                      - id: 660f9511-f3ac-52e5-b827-557766551111
+                        title: Complete Phase II implementation
+                        description: Build full-stack todo app
+                        is_completed: false
+                        created_at: '2026-01-03T10:05:00Z'
+                        updated_at: '2026-01-03T10:05:00Z'
+                      - id: 770f9522-g4bd-63f6-c938-668877662222
+                        title: Write documentation
+                        description: null
+                        is_completed: true
+                        created_at: '2026-01-02T15:30:00Z'
+                        updated_at: '2026-01-03T09:00:00Z'
+                emptyList:
+                  summary: User with no todos
+                  value:
+                    todos: []
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                notAuthenticated:
+                  summary: Session expired or invalid
+                  value:
+                    error: Authentication required
+
+    post:
+      summary: Create new todo
+      description: Create a new todo for the authenticated user.
+      tags:
+        - Todos
+      operationId: createTodo
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTodoRequest'
+            examples:
+              withDescription:
+                summary: Todo with description
+                value:
+                  title: Complete Phase II implementation
+                  description: Build full-stack todo app with FastAPI and Next.js
+              titleOnly:
+                summary: Todo without description
+                value:
+                  title: Write documentation
+      responses:
+        '201':
+          description: Todo created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TodoResponse'
+              examples:
+                success:
+                  summary: Created todo
+                  value:
+                    id: 660f9511-f3ac-52e5-b827-557766551111
+                    title: Complete Phase II implementation
+                    description: Build full-stack todo app with FastAPI and Next.js
+                    is_completed: false
+                    created_at: '2026-01-03T10:05:00Z'
+                    updated_at: '2026-01-03T10:05:00Z'
+        '400':
+          description: Invalid request (validation error)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                missingTitle:
+                  summary: Title is required
+                  value:
+                    error: Title is required
+                titleTooLong:
+                  summary: Title exceeds maximum length
+                  value:
+                    error: Title must not exceed 500 characters
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /todos/{id}:
+    get:
+      summary: Get specific todo
+      description: Retrieve a specific todo by ID. User must own the todo.
+      tags:
+        - Todos
+      operationId: getTodo
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: '#/components/parameters/TodoId'
+      responses:
+        '200':
+          description: Todo retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TodoResponse'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden (todo belongs to another user)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                notOwner:
+                  summary: Todo belongs to another user
+                  value:
+                    error: Access denied
+        '404':
+          description: Todo not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                notFound:
+                  summary: Todo does not exist
+                  value:
+                    error: Todo not found
+
+    put:
+      summary: Update todo
+      description: Update title and/or description of an existing todo. User must own the todo.
+      tags:
+        - Todos
+      operationId: updateTodo
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: '#/components/parameters/TodoId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTodoRequest'
+            examples:
+              updateBoth:
+                summary: Update title and description
+                value:
+                  title: Updated title
+                  description: Updated description
+              updateTitle:
+                summary: Update title only
+                value:
+                  title: Updated title
+      responses:
+        '200':
+          description: Todo updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TodoResponse'
+        '400':
+          description: Invalid request (validation error)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden (todo belongs to another user)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Todo not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      summary: Delete todo
+      description: Permanently delete a todo. User must own the todo.
+      tags:
+        - Todos
+      operationId: deleteTodo
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: '#/components/parameters/TodoId'
+      responses:
+        '200':
+          description: Todo deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+              examples:
+                success:
+                  summary: Successful deletion
+                  value:
+                    message: Todo deleted successfully
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden (todo belongs to another user)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Todo not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /todos/{id}/complete:
+    patch:
+      summary: Toggle todo completion
+      description: Toggle the completion status of a todo (complete ↔ incomplete). User must own the todo.
+      tags:
+        - Todos
+      operationId: toggleTodoCompletion
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: '#/components/parameters/TodoId'
+      responses:
+        '200':
+          description: Completion status toggled successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TodoResponse'
+              examples:
+                markedComplete:
+                  summary: Todo marked as complete
+                  value:
+                    id: 660f9511-f3ac-52e5-b827-557766551111
+                    title: Complete Phase II implementation
+                    description: Build full-stack todo app
+                    is_completed: true
+                    created_at: '2026-01-03T10:05:00Z'
+                    updated_at: '2026-01-03T11:30:00Z'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden (todo belongs to another user)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Todo not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: session
+      description: Session cookie set by Better Auth on signin
+
+  parameters:
+    TodoId:
+      name: id
+      in: path
+      required: true
+      description: UUID of the todo
+      schema:
+        type: string
+        format: uuid
+      example: 660f9511-f3ac-52e5-b827-557766551111
+
+  schemas:
+    SignupRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 255
+          description: User email address
+          example: user@example.com
+        password:
+          type: string
+          minLength: 8
+          maxLength: 255
+          description: User password (min 8 characters)
+          example: SecurePass123
+
+    SignupResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: Account created successfully
+        user_id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440000
+
+    SigninRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          example: user@example.com
+        password:
+          type: string
+          example: SecurePass123
+
+    SigninResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: Signed in successfully
+        user:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+              example: 550e8400-e29b-41d4-a716-446655440000
+            email:
+              type: string
+              format: email
+              example: user@example.com
+
+    CreateTodoRequest:
+      type: object
+      required:
+        - title
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 500
+          description: Todo title (required)
+          example: Complete Phase II implementation
+        description:
+          type: string
+          nullable: true
+          description: Optional detailed description
+          example: Build full-stack todo app with FastAPI and Next.js
+
+    UpdateTodoRequest:
+      type: object
+      required:
+        - title
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 500
+          description: Updated todo title
+          example: Updated title
+        description:
+          type: string
+          nullable: true
+          description: Updated description (or null to clear)
+          example: Updated description
+
+    TodoResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 660f9511-f3ac-52e5-b827-557766551111
+        title:
+          type: string
+          example: Complete Phase II implementation
+        description:
+          type: string
+          nullable: true
+          example: Build full-stack todo app with FastAPI and Next.js
+        is_completed:
+          type: boolean
+          example: false
+        created_at:
+          type: string
+          format: date-time
+          example: '2026-01-03T10:05:00Z'
+        updated_at:
+          type: string
+          format: date-time
+          example: '2026-01-03T10:05:00Z'
+
+    TodoListResponse:
+      type: object
+      properties:
+        todos:
+          type: array
+          items:
+            $ref: '#/components/schemas/TodoResponse'
+
+    MessageResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: Operation successful
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message describing what went wrong
+          example: Invalid request
