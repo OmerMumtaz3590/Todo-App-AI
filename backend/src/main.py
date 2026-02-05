@@ -2,7 +2,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .config import settings
-from .api import auth, todos
+from .api import auth, todos, chat, conversations
 
 app = FastAPI(
     title=settings.app_name,
@@ -23,6 +23,8 @@ app.add_middleware(
 # Register routers
 app.include_router(auth.router)
 app.include_router(todos.router)
+app.include_router(chat.router)
+app.include_router(conversations.router)
 
 
 @app.get("/")

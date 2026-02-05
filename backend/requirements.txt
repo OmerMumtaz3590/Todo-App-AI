@@ -24,6 +24,10 @@ pytest
 pytest-cov
 httpx
 
+# AI/Agent (Phase III)
+openai-agents
+openai
+
 # Development
 black
 flake8

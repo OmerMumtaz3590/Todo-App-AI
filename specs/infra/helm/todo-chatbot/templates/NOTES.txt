@@ -1,0 +1,80 @@
+🎉 Todo Chatbot has been deployed!
+
+📋 Release: {{ .Release.Name }}
+📦 Namespace: {{ .Release.Namespace }}
+📊 Chart Version: {{ .Chart.Version }}
+🏷️ App Version: {{ .Chart.AppVersion }}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🚀 ACCESS THE APPLICATION
+
+Option 1: Port Forwarding (Recommended for local development)
+
+  # Terminal 1 - Backend API
+  kubectl port-forward svc/todo-backend {{ .Values.backend.service.port }}:{{ .Values.backend.service.port }} -n {{ .Release.Namespace }}
+
+  # Terminal 2 - Frontend UI
+  kubectl port-forward svc/todo-frontend {{ .Values.frontend.service.port }}:{{ .Values.frontend.service.port }} -n {{ .Release.Namespace }}
+
+  Then open: http://localhost:{{ .Values.frontend.service.port }}
+
+{{- if .Values.ingress.enabled }}
+
+Option 2: Ingress
+
+  Make sure you have an ingress controller installed.
+  Add the following to your /etc/hosts (or Windows hosts file):
+
+    $(minikube ip)  {{ .Values.ingress.host }}
+
+  Then open: http://{{ .Values.ingress.host }}
+
+{{- end }}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📊 CHECK STATUS
+
+  # View all resources
+  kubectl get all -n {{ .Release.Namespace }}
+
+  # Check pod status
+  kubectl get pods -n {{ .Release.Namespace }}
+
+  # View logs
+  kubectl logs -l app=todo-backend -n {{ .Release.Namespace }}
+  kubectl logs -l app=todo-frontend -n {{ .Release.Namespace }}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔧 COMMON OPERATIONS
+
+  # Upgrade deployment
+  helm upgrade {{ .Release.Name }} specs/infra/helm/todo-chatbot -n {{ .Release.Namespace }} -f secrets.yaml
+
+  # Rollback
+  helm rollback {{ .Release.Name }} -n {{ .Release.Namespace }}
+
+  # Scale backend
+  kubectl scale deployment {{ include "todo-chatbot.backend.name" . }} --replicas=3 -n {{ .Release.Namespace }}
+
+  # Uninstall
+  helm uninstall {{ .Release.Name }} -n {{ .Release.Namespace }}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🤖 AI-ASSISTED OPERATIONS
+
+  # kubectl-ai examples
+  kubectl-ai "Scale todo-backend to 2 replicas in namespace {{ .Release.Namespace }}"
+  kubectl-ai "Show logs from todo-backend in the last 5 minutes"
+  kubectl-ai "Why is the todo-backend pod not ready?"
+
+  # kagent examples
+  kagent analyze --namespace {{ .Release.Namespace }}
+  kagent report resources --namespace {{ .Release.Namespace }}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Happy chatting! 🎯

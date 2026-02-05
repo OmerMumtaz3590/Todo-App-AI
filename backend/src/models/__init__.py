@@ -1,6 +1,8 @@
 """Database models package."""
 from .user import User, UserPublic, UserCreate
 from .todo import Todo, TodoPublic, TodoCreate, TodoUpdate
+from .conversation import Conversation
+from .message import Message
 
 __all__ = [
     "User",
@@ -10,4 +12,6 @@ __all__ = [
     "TodoPublic",
     "TodoCreate",
     "TodoUpdate",
+    "Conversation",
+    "Message",
 ]

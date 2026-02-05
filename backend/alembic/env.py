@@ -23,7 +23,7 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent / "src"))
 
 from sqlmodel import SQLModel
-from src.models import User, Todo  # Import all models
+from src.models import User, Todo, Conversation, Message  # Import all models
 from src.config import settings
 
 # Set database URL from settings

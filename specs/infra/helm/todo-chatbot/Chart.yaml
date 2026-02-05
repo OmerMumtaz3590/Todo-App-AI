@@ -1,0 +1,17 @@
+apiVersion: v2
+name: todo-chatbot
+description: Todo Chatbot Application - FastAPI Backend + Next.js Frontend
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+keywords:
+  - todo
+  - chatbot
+  - fastapi
+  - nextjs
+  - ai
+maintainers:
+  - name: Todo Team
+home: https://github.com/your-org/todo-chatbot
+sources:
+  - https://github.com/your-org/todo-chatbot

@@ -5,6 +5,9 @@
 - ✅ Frontend project initialized with Next.js and TypeScript
 - ✅ Database models created (User, Todo)
 - ✅ Alembic migrations configured
+- ✅ Git for development (Windows users: install Git for Windows so bash is available, or set `CLAUDE_CODE_GIT_BASH_PATH` to the path of `bash.exe`)
+
+> 💡 Tip: If `claude` or other tools that require bash are failing on Windows, install Git for Windows from https://git-scm.com/downloads and then either ensure `git`/`bash` are on your PATH or set `CLAUDE_CODE_GIT_BASH_PATH` to the installed `bash.exe` and restart VS Code.
 
 ## Manual Setup Required
 
@@ -145,6 +148,23 @@ All remaining tasks are documented in `specs/002-fullstack-web-app/tasks.md` wit
 - HTTP-only cookies for session management
 
 ## Troubleshooting
+
+### Git Bash or WSL Bash for Claude Code (Windows)
+- If you use Claude Code on Windows and Git Bash isn't in PATH, set the environment variable `CLAUDE_CODE_GIT_BASH_PATH` to the full path of `bash.exe` (commonly `C:\Program Files\Git\bin\bash.exe`) so tools that require bash can find it.
+- Installing Git for Windows requires administrator privileges; if you don't have admin rights, you can use WSL's bash (`C:\Windows\System32\bash.exe`) as an alternative in many cases.
+- For a permanent user-level setting run in PowerShell (example using WSL bash):
+```powershell
+[Environment]::SetEnvironmentVariable('CLAUDE_CODE_GIT_BASH_PATH','C:\Windows\System32\bash.exe','User')
+```
+- To set it for VS Code workspace, add to `.vscode/settings.json`:
+```json
+{
+  "terminal.integrated.env.windows": {
+    "CLAUDE_CODE_GIT_BASH_PATH": "C:\\Windows\\System32\\bash.exe"
+  }
+}
+```
+- Restart VS Code after making changes. If Claude still fails to start, install Git for Windows (requires admin) from https://git-scm.com/downloads and update `CLAUDE_CODE_GIT_BASH_PATH` accordingly.
 
 ### Backend won't start
 - Check `DATABASE_URL` is set in `.env`

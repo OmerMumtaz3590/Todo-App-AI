@@ -52,3 +52,23 @@ logs/
 *.tmp
 *.temp
 .cache/
+
+# Root-level Python artifacts
+__pycache__/
+*.db
+
+# Kubernetes/Helm
+*.secret.yaml
+secrets.yaml
+secrets/
+.kube/
+kubeconfig*
+*.key
+*.crt
+*.pem
+
+# Helm
+.helmignore
+
+# Docker (runtime)
+*.env.docker
