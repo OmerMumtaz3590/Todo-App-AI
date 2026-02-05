@@ -1,24 +1,16 @@
 <!--
 ================================================================================
 SYNC IMPACT REPORT
-================================================================================
-Version Change: 2.0.0 → 2.1.0 (MINOR - Phase IV redefined for Cloud-Native Local Deployment)
+Version Change: 2.1.0 → 2.2.0 (MINOR - Phase V event-driven architecture rules added)
 
 Added Sections:
-- Section X: Phase IV Global Rules – Deployment & Infrastructure Standards
+- Section XI: Phase V Global Rules – Event-Driven Architecture Standards
 
 Modified Principles:
-- Section III: Phase Governance - Phase IV redefined from "Distributed Services" to
-  "Cloud-Native Local Deployment"
-- Section III: Phase IV Constraints - Completely rewritten for Kubernetes/Docker/Helm scope
-- Section III: Phase V Constraints - Updated to reflect Docker/K8s moving to Phase IV
-- Section IV: Technology Constraints - Infrastructure table updated (Docker/K8s → Phase IV),
-  new Infrastructure Tools table added (Helm, Gordon, kubectl-ai, kagent)
-- Section V: Quality Principles - Cloud-Native Readiness moved from Phase V to Phase IV+
-- Appendix A: Phase Technology Matrix - Updated to reflect Phase IV infrastructure
-
-Removed Sections:
-- N/A
+- Section III: Phase V Constraints - Completely rewritten for event-driven architecture scope
+- Section III: Phase Governance - Updated Phase V definition from "Production Cloud & Distributed Services" to "Event-Driven Distributed Services"
+- Section IV: Technology Constraints - Updated Kafka and Dapr phase assignments from V to V+
+- Appendix A: Phase Technology Matrix - Updated Kafka and Dapr phase requirements
 
 Templates Updated:
 - ✅ plan-template.md - No changes needed (Constitution Check references generic rules)
@@ -29,10 +21,9 @@ Deferred Items:
 - N/A
 
 Version Bump Rationale:
-- MINOR bump: New section (Section X) added, Phase IV scope expanded
-- Phase IV was previously unimplemented; no backward compatibility break
-- Existing Phase I-III governance is unchanged
-- New rules (DIS-*) are additive, not replacing existing rules
+- MINOR bump: New section (Section XI) added, Phase V scope expanded
+- New rules (EVS-*, DAP-*) are additive, not replacing existing rules
+- Existing Phase I-IV governance is unchanged
 
 ================================================================================
 -->
@@ -123,7 +114,7 @@ Each phase has strict scope boundaries that MUST NOT be violated.
 | II | Full-Stack Web | Python REST API, Neon PostgreSQL, Next.js frontend, authentication |
 | III | MCP Agentic Chatbot | Natural-language task management via MCP tools, Claude/OpenAI agents, stateless API |
 | IV | Cloud-Native Local Deployment | Docker containerization, Kubernetes (Minikube), Helm Charts, AI-assisted ops |
-| V | Production Cloud & Distributed Services | Kafka event streaming, Dapr sidecar, multi-cluster K8s, production cloud infrastructure |
+| V | Event-Driven Distributed Services | Kafka event streaming, Dapr sidecar, distributed architecture, cloud infrastructure |
 
 ### Phase Boundary Rules
 
@@ -218,16 +209,23 @@ The following are **explicitly prohibited** in Phase IV:
 - Dapr sidecar integration
 - Service mesh patterns (Istio, Linkerd)
 
-### Phase V Constraints (Production Cloud & Distributed Services)
+### Phase V Constraints (Event-Driven Distributed Services)
 
-Adds to Phase IV:
-- Kafka event streaming
-- Dapr sidecar integration
-- Multi-cluster Kubernetes (production cloud providers)
-- Microservices architecture (service decomposition)
-- Service mesh patterns
+The following are **explicitly allowed** in Phase V (adds to Phase IV):
+- Kafka event streaming with Dapr abstraction layer
+- Dapr sidecar integration for pub/sub, state management, secrets, service invocation
+- Event-driven architecture with asynchronous processing
+- Microservices decomposition with loose coupling
+- Multi-cluster Kubernetes deployments (production cloud providers)
 - Advanced cloud infrastructure (managed K8s, cloud-native services)
 - Production observability stack (Prometheus, Grafana, Jaeger)
+- Cron jobs and scheduled tasks via Dapr bindings
+- Service mesh patterns for inter-service communication
+
+The following are **explicitly prohibited** in Phase V:
+- Direct Kafka client usage — always use Dapr Pub/Sub abstraction
+- Synchronous processing for new event-based features
+- Monolithic architecture for new functionality (must be microservices)
 
 ---
 
@@ -268,8 +266,8 @@ Deviations require constitutional amendment.
 | Docker | IV | Containerization |
 | Kubernetes (Minikube) | IV | Local container orchestration |
 | Helm | IV | Kubernetes package management |
-| Kafka | V | Event streaming |
-| Dapr | V | Distributed runtime |
+| Kafka | V+ | Event streaming |
+| Dapr | V+ | Distributed runtime |
 
 ### Infrastructure Tooling (AI-Assisted)
 
@@ -286,7 +284,7 @@ Deviations require constitutional amendment.
 | MCP (Model Context Protocol) | III | Tool contract for agentic task management |
 | Claude API / Anthropic SDK | III | LLM provider for chatbot agent |
 | OpenAI Agents SDK | III | Agent orchestration framework |
-| Dapr AI Agents | V | Distributed agent runtime |
+| Dapr AI Agents | V+ | Distributed agent runtime |
 
 ### Technology Rules
 
@@ -573,6 +571,53 @@ guidance in earlier sections when operating within Phase IV scope.
 
 ---
 
+## XI. Phase V Global Rules – Event-Driven Architecture Standards
+
+These rules are **NON-NEGOTIABLE** for all Phase V work and supersede any conflicting
+guidance in earlier sections when operating within Phase V scope.
+
+### 1. Event-Driven Architecture Requirements
+
+- **RULE EVS-001**: From Phase V onward: application MUST be event-driven using Kafka (or compatible Pub/Sub) + Dapr for decoupling. All new service-to-service communication must be asynchronous via events.
+- **RULE EVS-002**: All new features (recurring tasks, due dates/reminders, priorities, tags, search/filter/sort) MUST use events for async processing. Synchronous API calls for new features are prohibited.
+- **RULE EVS-003**: Events MUST be idempotent and support replay. Event handlers MUST be designed to handle duplicate events safely.
+- **RULE EVS-004**: Event schemas MUST be versioned and backward-compatible. Breaking changes to event schemas require coordinated deployments.
+- **RULE EVS-005**: Event sourcing pattern SHOULD be used where appropriate for maintaining system state from event streams.
+
+### 2. Dapr Sidecar Integration
+
+- **RULE DAP-001**: Dapr sidecar MUST be used for Pub/Sub abstraction. No direct Kafka client code — always use Dapr Pub/Sub APIs.
+- **RULE DAP-002**: Dapr sidecar MUST be used for state management. All persistent state operations go through Dapr state store APIs.
+- **RULE DAP-003**: Dapr sidecar MUST be used for secrets management. All secret access goes through Dapr secret store APIs.
+- **RULE DAP-004**: Dapr sidecar MUST be used for service invocation. All service-to-service calls go through Dapr service invocation APIs.
+- **RULE DAP-005**: Dapr sidecar MUST be used for cron jobs or scheduled tasks via Dapr bindings for reminders and other time-based triggers.
+
+### 3. Deployment & Infrastructure Requirements
+
+- **RULE EVS-006**: Deployments MUST support local Minikube with Dapr + self-hosted Kafka/Redpanda for development and testing.
+- **RULE EVS-007**: Deployments MUST support cloud environments: AKS / GKE / OKE with managed or self-hosted Kafka for production.
+- **RULE EVS-008**: All services MUST run with Dapr sidecar in production-grade K8s environments. Services without Dapr sidecars are prohibited in Phase V.
+- **RULE EVS-009**: Infrastructure remains fully spec-driven with configurations under `specs/infra/dapr.md`, `specs/infra/kafka.md`, and `specs/infra/cloud.md`.
+- **RULE EVS-010**: CI/CD via GitHub Actions is required for build → push → deploy pipelines.
+
+### 4. Service Architecture
+
+- **RULE EVS-011**: Maintain stateless pods; Neon DB + Dapr state store act as single source of truth for all application state.
+- **RULE EVS-012**: Microservices architecture is required for new functionality. Services MUST be decomposed around business capabilities.
+- **RULE EVS-013**: Services MUST have bounded contexts with clear ownership boundaries. Cross-service queries are discouraged in favor of eventual consistency via events.
+- **RULE EVS-014**: Circuit breaker patterns MUST be implemented for resilience between services via Dapr's built-in circuit breaking.
+- **RULE EVS-015**: Saga pattern SHOULD be implemented for distributed transactions across services.
+
+### 5. Observability & Monitoring
+
+- **RULE EVS-016**: Distributed tracing MUST be enabled across all services using Dapr's tracing capabilities.
+- **RULE EVS-017**: Centralized logging MUST be implemented with structured logs containing correlation IDs for event traceability.
+- **RULE EVS-018**: Metrics collection MUST be standardized using Prometheus format and exported via Dapr's metrics.
+- **RULE EVS-019**: Health checks MUST include readiness for event processing and connection to message brokers.
+- **RULE EVS-020**: Monitoring and alerting basics MUST be documented and implemented for production environments.
+
+---
+
 ## Appendix A: Quick Reference
 
 ### The Workflow
@@ -596,7 +641,7 @@ Constitution → Specification → Plan → Tasks → Implementation
 ### Phase Technology Matrix
 
 | Technology | I | II | III | IV | V |
-|------------|---|----|----|----|----|
+|------------|---|----|----|----|---|
 | Python | ✓ | ✓ | ✓ | ✓ | ✓ |
 | In-memory | ✓ | | | | |
 | FastAPI | | ✓ | ✓ | ✓ | ✓ |
@@ -619,4 +664,4 @@ Constitution → Specification → Plan → Tasks → Implementation
 
 ---
 
-**Version**: 2.1.0 | **Ratified**: 2025-12-27 | **Last Amended**: 2026-02-04
+**Version**: 2.2.0 | **Ratified**: 2025-12-27 | **Last Amended**: 2026-02-05
