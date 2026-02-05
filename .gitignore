@@ -72,3 +72,12 @@ kubeconfig*
 
 # Docker (runtime)
 *.env.docker
+
+# Dapr
+.dapr/
+daprd
+*.daprd.log
+
+# Kafka
+*.kafka.log
+kafka-logs/

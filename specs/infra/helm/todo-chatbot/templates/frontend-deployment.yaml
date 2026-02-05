@@ -1,8 +1,9 @@
 {{/*
-Frontend Deployment - Next.js Application
+Frontend Deployment - Next.js Application with Dapr Sidecar
 DIS-001: All services run in Kubernetes
 DIS-014: Health probes required
 DIS-023: Non-root containers
+EVS-008: Dapr sidecar required for all services in Phase V
 */}}
 apiVersion: apps/v1
 kind: Deployment
@@ -17,10 +18,18 @@ spec:
       {{- include "todo-chatbot.frontend.selectorLabels" . | nindent 6 }}
   template:
     metadata:
-      {{- with .Values.podAnnotations }}
       annotations:
+        dapr.io/enabled: "true"
+        dapr.io/app-id: "todo-frontend"
+        dapr.io/app-port: "3000"
+        dapr.io/app-protocol: "http"
+        dapr.io/app-max-concurrency: "100"
+        dapr.io/config: "app-config"
+        dapr.io/log-level: "info"
+        dapr.io/sidecar-listen-addresses: "0.0.0.0"
+        {{- with .Values.podAnnotations }}
         {{- toYaml . | nindent 8 }}
-      {{- end }}
+        {{- end }}
       labels:
         {{- include "todo-chatbot.frontend.selectorLabels" . | nindent 8 }}
     spec:
@@ -56,6 +65,13 @@ spec:
               value: "3000"
             - name: HOSTNAME
               value: "0.0.0.0"
+            # Dapr environment variables
+            - name: DAPR_HTTP_ENDPOINT
+              value: "http://localhost:3500"
+            - name: DAPR_GRPC_ENDPOINT
+              value: "http://localhost:50001"
+            - name: DAPR_APP_ID
+              value: "todo-frontend"
           livenessProbe:
             {{- toYaml .Values.frontend.livenessProbe | nindent 12 }}
           readinessProbe:

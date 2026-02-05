@@ -87,7 +87,9 @@ function Start-Deployment {
             if ($minikubeStatus -ne "Running") {
                 Write-Info "Starting Minikube with recommended settings..."
                 minikube start --memory=4096 --cpus=2 --driver=docker --kubernetes-version=stable
-                if ($LASTEXITCODE -ne 0) {
+                if ($LASTEXITCODE -eq 0) {
+                    Write-Info "Minikube started successfully"
+                } else {
                     throw "Failed to start Minikube"
                 }
             } else {
@@ -109,8 +111,103 @@ function Start-Deployment {
     # Configure Docker to use Minikube's Docker daemon
     Write-Info "Configuring Docker to use Minikube..."
     & minikube -p minikube docker-env --shell powershell | Invoke-Expression
-    if ($LASTEXITCODE -ne 0) {
+    if ($LASTEXITCODE -eq 0) {
+        Write-Info "Docker configured for Minikube"
+    } else {
         Write-Error "Failed to configure Docker for Minikube"
+        exit 1
+    }
+
+    # Install Dapr
+    Write-Info "Installing Dapr on the cluster..."
+    try {
+        dapr init -k
+        Write-Info "Dapr installed successfully"
+    } catch {
+        Write-Error "Failed to install Dapr: $($_.Exception.Message)"
+        exit 1
+    }
+
+    # Wait for Dapr to be ready
+    Write-Info "Waiting for Dapr to be ready..."
+    kubectl wait --for=condition=ready pod -l app=dapr-placement-server -n dapr-system --timeout=300s
+    kubectl wait --for=condition=ready pod -l app=dapr-sidecar-injector -n dapr-system --timeout=300s
+    Write-Info "Dapr system is ready"
+
+    # Install Strimzi Kafka operator if not using external Kafka
+    Write-Info "Installing Strimzi Kafka operator..."
+    try {
+        # Add Strimzi Helm repo
+        helm repo add strimzi https://strimzi.io/charts/
+        helm repo update
+
+        # Install Strimzi operator
+        helm install strimzi strimzi/strimzi-kafka-operator --namespace kafka --create-namespace
+        Write-Info "Strimzi Kafka operator installed"
+
+        # Wait for operator to be ready
+        kubectl wait --for=condition=ready pod -l name=strimzi-cluster-operator --namespace kafka --timeout=300s
+        Write-Info "Strimzi operator is ready"
+    } catch {
+        Write-Error "Failed to install Strimzi: $($_.Exception.Message)"
+        exit 1
+    }
+
+    # Create Kafka cluster
+    Write-Info "Creating Kafka cluster..."
+    $kafkaYaml = @"
+apiVersion: kafka.strimzi.io/v1beta2
+kind: Kafka
+metadata:
+  name: todo-kafka
+  namespace: kafka
+spec:
+  kafka:
+    version: 3.6.0
+    replicas: 1
+    listeners:
+      - name: plain
+        port: 9092
+        type: internal
+        tls: false
+      - name: tls
+        port: 9093
+        type: internal
+        tls: true
+    config:
+      offsets.topic.replication.factor: 1
+      transaction.state.log.replication.factor: 1
+      transaction.state.log.min.isr: 1
+      default.replication.factor: 1
+      min.insync.replicas: 1
+      inter.broker.protocol.version: "3.6"
+    storage:
+      type: jbod
+      volumes:
+      - id: 0
+        type: persistent-claim
+        size: 10Gi
+        deleteClaim: false
+  zookeeper:
+    replicas: 1
+    storage:
+      type: persistent-claim
+      size: 5Gi
+      deleteClaim: false
+  entityOperator:
+    topicOperator: {}
+    userOperator: {}
+"@
+
+    try {
+        $kafkaYaml | kubectl apply -f -
+        Write-Info "Kafka cluster created, waiting for readiness..."
+
+        # Wait for Kafka to be ready
+        kubectl wait kafka/todo-kafka --for=condition=Ready --timeout=600s -n kafka
+        Write-Info "Kafka cluster is ready"
+    } catch {
+        Write-Error "Failed to create Kafka cluster: $($_.Exception.Message)"
         exit 1
     }
 
@@ -123,7 +220,9 @@ function Start-Deployment {
         Push-Location ./backend
         try {
             docker build -t todo-backend:local . --platform linux/amd64
-            if ($LASTEXITCODE -ne 0) {
+            if ($LASTEXITCODE -eq 0) {
+                Write-Info "Backend image built successfully"
+            } else {
                 throw "Failed to build backend image"
             }
         } finally {
@@ -135,7 +234,9 @@ function Start-Deployment {
         Push-Location ./frontend
         try {
             docker build --build-arg NEXT_PUBLIC_API_URL=http://todo-backend:8000 -t todo-frontend:local . --platform linux/amd64
-            if ($LASTEXITCODE -ne 0) {
+            if ($LASTEXITCODE -eq 0) {
+                Write-Info "Frontend image built successfully"
+            } else {
                 throw "Failed to build frontend image"
             }
         } finally {
@@ -144,11 +245,11 @@ function Start-Deployment {
 
         # Verify images
         Write-Info "Verifying images..."
-        $images = docker images | Select-String "todo-"
-        if ($images.Count -lt 2) {
-            Write-Warning "Expected 2 todo images, found $($images.Count)"
+        $images = docker images | Select-String "todo"
+        if ($images.Count -ge 2) {
+            Write-Info "Found required images"
         } else {
-            Write-Info "Found $(($images | Measure-Object).Count) todo images"
+            Write-Warning "Expected 2 todo images, found less than 2"
         }
     } else {
         Write-Info "Skipping Docker build (assumed to be completed)"
@@ -167,16 +268,6 @@ function Start-Deployment {
         Write-Warning "Secrets file '$secretsFile' not found!"
         Write-Info "Please create a secrets.yaml file with your sensitive configuration:"
         Write-Info @"
-# secrets.yaml
-secrets:
-  databaseUrl: "postgresql://user:password@ep-xxx.neon.tech/neondb?sslmode=require"
-  secretKey: "your-jwt-secret-key-minimum-32-characters-long"
-  openaiApiKey: "sk-your-openai-api-key"
-"@
-        Write-Info "NOTICE: This file is in .gitignore and should NEVER be committed to version control!"
-
-        # Create a sample file without actual secrets
-        $sampleSecrets = @"
 # secrets.yaml - SAMPLE CONFIGURATION (fill in with real values)
 # DO NOT COMMIT THIS FILE TO VERSION CONTROL
 secrets:
@@ -184,8 +275,6 @@ secrets:
   secretKey: "YOUR_JWT_SECRET_KEY_HERE_MINIMUM_32_CHARS"
   openaiApiKey: "YOUR_OPENAI_API_KEY_HERE"
 "@
-        Set-Content -Path $secretsFile -Value $sampleSecrets
-        Write-Info "Created sample secrets.yaml file. Please fill in actual values."
         Write-Info "Then run this script again or proceed with manual Helm installation."
         exit 0
     } else {
@@ -206,12 +295,12 @@ secrets:
         # Install the release
         Write-Info "Installing Helm release 'todo'..."
         helm upgrade --install todo specs/infra/helm/todo-chatbot/ --namespace todo-app --values $secretsFile --wait --timeout=10m
-        if ($LASTEXITCODE -ne 0) {
+        if ($LASTEXITCODE -eq 0) {
+            Write-Info "Helm release installed successfully!"
+        } else {
             Write-Error "Failed to install Helm release"
             exit 1
         }
-
-        Write-Info "Helm release installed successfully!"
     } else {
         Write-Info "Skipping Helm installation (assumed to be completed)"
     }

@@ -1,0 +1,72 @@
+{{- if .Values.dapr.enabled }}
+---
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: {{ include "todo-chatbot.fullname" . }}-pubsub
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "todo-chatbot.labels" . | nindent 4 }}
+spec:
+  type: pubsub.kafka
+  version: v1
+  metadata:
+  - name: brokers
+    value: {{ .Values.kafka.brokers | quote }}
+  - name: consumerGroup
+    value: {{ .Values.dapr.pubsub.consumerGroup | default "todo-app-group" | quote }}
+  - name: clientID
+    value: {{ .Values.dapr.pubsub.clientID | default "todo-app-client" | quote }}
+  - name: authRequired
+    value: {{ .Values.kafka.authRequired | quote }}
+  - name: saslUsername
+    value: {{ .Values.kafka.saslUsername | quote }}
+  - name: saslPassword
+    value: {{ .Values.kafka.saslPassword | quote }}
+  - name: maxMessageBytes
+    value: {{ .Values.dapr.pubsub.maxMessageBytes | default "1048576" | quote }}
+  - name: consumeRetryInterval
+    value: {{ .Values.dapr.pubsub.consumeRetryInterval | default "200ms" | quote }}
+---
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: {{ include "todo-chatbot.fullname" . }}-statestore
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "todo-chatbot.labels" . | nindent 4 }}
+spec:
+  type: state.postgresql
+  version: v1
+  metadata:
+  - name: connectionString
+    value: {{ .Values.postgresql.connectionString | quote }}
+  - name: version
+    value: {{ .Values.dapr.statestore.version | default "14" | quote }}
+  - name: maxConns
+    value: {{ .Values.dapr.statestore.maxConns | default "100" | quote }}
+  - name: table
+    value: {{ .Values.dapr.statestore.table | default "dapr_state_store" | quote }}
+  - name: schema
+    value: {{ .Values.dapr.statestore.schema | default "public" | quote }}
+  - name: actorStateStore
+    value: {{ .Values.dapr.statestore.actorStateStore | default "true" | quote }}
+  - name: concurrency
+    value: {{ .Values.dapr.statestore.concurrency | default "first-write" | quote }}
+---
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: {{ include "todo-chatbot.fullname" . }}-secretstore
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "todo-chatbot.labels" . | nindent 4 }}
+spec:
+  type: secretstores.kubernetes
+  version: v1
+  metadata:
+  - name: namespace
+    value: {{ .Release.Namespace | quote }}
+  - name: permissions
+    value: {{ .Values.dapr.secretstore.permissions | default "read" | quote }}
+{{- end }}

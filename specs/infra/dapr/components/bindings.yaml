@@ -1,0 +1,23 @@
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: reminder-cron
+  namespace: todo-app
+spec:
+  type: bindings.cron
+  version: v1
+  metadata:
+  - name: schedule
+    value: "*/30 * * * * *"  # Every 30 seconds (for development/testing)
+---
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: recurring-task-cron
+  namespace: todo-app
+spec:
+  type: bindings.cron
+  version: v1
+  metadata:
+  - name: schedule
+    value: "0 */5 * * * *"  # Every 5 minutes (for recurring task generation)

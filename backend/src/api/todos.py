@@ -1,7 +1,9 @@
 """Todo API endpoints."""
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlmodel import Session
 from uuid import UUID
+from typing import Optional, List
+from datetime import datetime
 
 from ..database import get_session
 from ..schemas.todo_schemas import (
@@ -10,6 +12,7 @@ from ..schemas.todo_schemas import (
     CreateTodoRequest,
     UpdateTodoRequest,
     ToggleCompletionResponse,
+    PriorityEnum,
 )
 from ..schemas.auth_schemas import MessageResponse
 from ..services.todo_service import TodoService
@@ -19,29 +22,84 @@ from ..models.user import User
 router = APIRouter(prefix="/todos", tags=["Todos"])
 
 
+def todo_to_response(todo) -> TodoResponse:
+    """Convert a Todo model to TodoResponse with all Phase V fields."""
+    return TodoResponse(
+        id=todo.id,
+        title=todo.title,
+        description=todo.description,
+        is_completed=todo.is_completed,
+        created_at=todo.created_at,
+        updated_at=todo.updated_at,
+        priority=todo.priority,
+        tags=todo.tags if todo.tags else [],
+        due_date=todo.due_date,
+        remind_at=todo.remind_at,
+        recurrence_rule=todo.recurrence_rule,
+        next_occurrence=todo.next_occurrence,
+        parent_task_id=todo.parent_task_id,
+    )
+
+
 @router.get("", response_model=TodoListResponse)
 async def get_todos(
+    priority: Optional[PriorityEnum] = Query(None, description="Filter by priority"),
+    tags: Optional[List[str]] = Query(None, description="Filter by tags"),
+    status: Optional[str] = Query(None, description="Filter by status: pending or completed"),
+    due_date_from: Optional[datetime] = Query(None, description="Filter by due date from"),
+    due_date_to: Optional[datetime] = Query(None, description="Filter by due date to"),
+    sort_by: Optional[str] = Query(None, description="Sort by: due_date, priority, title, created_at"),
+    sort_order: Optional[str] = Query("desc", description="Sort order: asc or desc"),
     current_user: User = Depends(get_current_user),
     session: Session = Depends(get_session),
 ):
     """
-    Get all todos for the authenticated user.
+    Get all todos for the authenticated user with optional filtering and sorting.
 
-    Returns todos ordered by created_at DESC, empty array if no todos.
+    - **priority**: Filter by priority level (HIGH, MEDIUM, LOW)
+    - **tags**: Filter by tags (can specify multiple)
+    - **status**: Filter by completion status (pending, completed)
+    - **due_date_from**: Filter todos with due date on or after this date
+    - **due_date_to**: Filter todos with due date on or before this date
+    - **sort_by**: Sort by field (due_date, priority, title, created_at)
+    - **sort_order**: Sort order (asc, desc)
+
+    Returns todos matching filters, empty array if no todos.
     """
-    todos = TodoService.get_todos(session, current_user.id)
+    todos = TodoService.get_todos(
+        session,
+        current_user.id,
+        priority=priority,
+        tags=tags,
+        status=status,
+        due_date_from=due_date_from,
+        due_date_to=due_date_to,
+        sort_by=sort_by,
+        sort_order=sort_order
+    )
     return TodoListResponse(
-        todos=[
-            TodoResponse(
-                id=todo.id,
-                title=todo.title,
-                description=todo.description,
-                is_completed=todo.is_completed,
-                created_at=todo.created_at,
-                updated_at=todo.updated_at,
-            )
-            for todo in todos
-        ]
+        todos=[todo_to_response(todo) for todo in todos],
+        total=len(todos)
+    )
+
+
+@router.get("/search", response_model=TodoListResponse)
+async def search_todos(
+    q: str = Query(..., min_length=1, description="Search query"),
+    current_user: User = Depends(get_current_user),
+    session: Session = Depends(get_session),
+):
+    """
+    Search todos by keyword in title, description, and tags.
+
+    - **q**: Search query string (required)
+
+    Returns matching todos, empty array if no matches.
+    """
+    todos = TodoService.search_todos(session, current_user.id, q)
+    return TodoListResponse(
+        todos=[todo_to_response(todo) for todo in todos],
+        total=len(todos)
     )
 
 

@@ -1,0 +1,25 @@
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: todo-pubsub
+  namespace: todo-app
+spec:
+  type: pubsub.kafka
+  version: v1
+  metadata:
+  - name: brokers
+    value: "kafka:9092"  # Kafka service endpoint in K8s
+  - name: consumerGroup
+    value: "todo-app-group"
+  - name: clientID
+    value: "todo-app-client"
+  - name: authRequired
+    value: "false"  # Set to true in production with proper authentication
+  - name: saslUsername
+    value: ""
+  - name: saslPassword
+    value: ""
+  - name: maxMessageBytes
+    value: "1048576"
+  - name: consumeRetryInterval
+    value: "200ms"
