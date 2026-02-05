@@ -1,0 +1,587 @@
+openapi: 3.0.3
+info:
+  title: Advanced Task Management API
+  description: API for advanced task management features with event-driven architecture
+  version: 1.0.0
+servers:
+  - url: https://api.todo-app.com/v1
+    description: Production server
+  - url: https://staging-api.todo-app.com/v1
+    description: Staging server
+  - url: http://localhost:8000
+    description: Development server
+
+paths:
+  /tasks:
+    get:
+      summary: List tasks with advanced filtering and sorting
+      description: Retrieve a list of tasks with support for filtering by priority, tags, due date, and sorting options
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: priority
+          in: query
+          description: Filter tasks by priority level (HIGH, MEDIUM, LOW)
+          schema:
+            type: string
+            enum: [HIGH, MEDIUM, LOW]
+        - name: tags
+          in: query
+          description: Filter tasks by tags (comma-separated list)
+          schema:
+            type: string
+        - name: status
+          in: query
+          description: Filter tasks by completion status (pending, completed)
+          schema:
+            type: string
+            enum: [pending, completed]
+        - name: due_date_from
+          in: query
+          description: Filter tasks with due date from this date
+          schema:
+            type: string
+            format: date-time
+        - name: due_date_to
+          in: query
+          description: Filter tasks with due date up to this date
+          schema:
+            type: string
+            format: date-time
+        - name: sort_by
+          in: query
+          description: Sort field (due_date, priority, title, created_at)
+          schema:
+            type: string
+            enum: [due_date, priority, title, created_at]
+            default: created_at
+        - name: sort_order
+          in: query
+          description: Sort order (asc, desc)
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+        - name: page
+          in: query
+          description: Page number for pagination
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          description: Number of tasks per page
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+      responses:
+        '200':
+          description: List of tasks with filtering and sorting applied
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tasks:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Task'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+    post:
+      summary: Create a new task with advanced options
+      description: Create a new task with support for priority, tags, due dates, reminders, and recurrence rules
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTaskRequest'
+      responses:
+        '201':
+          description: Task created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /tasks/{task_id}:
+    get:
+      summary: Get a specific task
+      description: Retrieve a specific task by its ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Task details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      summary: Update a specific task
+      description: Update an existing task with new values
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTaskRequest'
+      responses:
+        '200':
+          description: Task updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      summary: Delete a specific task
+      description: Delete an existing task
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Task deleted successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /tasks/{task_id}/toggle:
+    patch:
+      summary: Toggle task completion status
+      description: Toggle the completion status of a task
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Task completion status toggled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /tasks/search:
+    get:
+      summary: Search tasks by keyword
+      description: Search tasks by keyword across title, description, and tags
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: q
+          in: query
+          required: true
+          description: Search query string
+          schema:
+            type: string
+        - name: page
+          in: query
+          description: Page number for pagination
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          description: Number of tasks per page
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tasks:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Task'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+                  query:
+                    type: string
+                    description: The original search query
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /recurring-tasks:
+    post:
+      summary: Create a recurring task template
+      description: Create a recurring task template that generates new instances based on the recurrence rule
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateRecurringTaskRequest'
+      responses:
+        '201':
+          description: Recurring task template created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /events/trigger:
+    post:
+      summary: Trigger a task-related event manually
+      description: Trigger an event in the event-driven architecture manually (for testing and debugging)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TriggerEventRequest'
+      responses:
+        '200':
+          description: Event triggered successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Event triggered successfully"
+                  eventId:
+                    type: string
+                    example: "evt-abc123-456def-789ghi"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Task:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Unique identifier for the task
+        user_id:
+          type: string
+          description: ID of the user who owns the task
+        title:
+          type: string
+          description: Title of the task
+          maxLength: 255
+        description:
+          type: string
+          description: Detailed description of the task
+        completed:
+          type: boolean
+          description: Whether the task is completed
+          default: false
+        priority:
+          type: string
+          description: Priority level of the task
+          enum: [HIGH, MEDIUM, LOW]
+        tags:
+          type: array
+          description: Array of tag strings for categorization
+          items:
+            type: string
+            maxLength: 50
+          maxItems: 10
+        due_date:
+          type: string
+          format: date-time
+          description: Date and time when the task is due
+        remind_at:
+          type: string
+          format: date-time
+          description: Date and time for sending reminder notification
+        recurrence_rule:
+          type: string
+          description: Recurrence pattern in iCal format or custom JSON
+        next_occurrence:
+          type: string
+          format: date-time
+          description: Next occurrence date for recurring tasks
+        parent_task_id:
+          type: integer
+          description: Reference to template for recurring tasks
+        created_at:
+          type: string
+          format: date-time
+          description: Timestamp when task was created
+        updated_at:
+          type: string
+          format: date-time
+          description: Timestamp when task was last updated
+        completed_at:
+          type: string
+          format: date-time
+          description: Timestamp when task was completed
+      required:
+        - id
+        - user_id
+        - title
+        - completed
+        - created_at
+        - updated_at
+
+    CreateTaskRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          description: Title of the task
+          maxLength: 255
+          example: "Buy groceries"
+        description:
+          type: string
+          description: Detailed description of the task
+          example: "Need to buy milk, bread, and eggs"
+        priority:
+          type: string
+          description: Priority level of the task
+          enum: [HIGH, MEDIUM, LOW]
+          default: MEDIUM
+        tags:
+          type: array
+          description: Array of tag strings for categorization
+          items:
+            type: string
+            maxLength: 50
+          maxItems: 10
+          example: ["shopping", "urgent"]
+        due_date:
+          type: string
+          format: date-time
+          description: Date and time when the task is due
+          example: "2024-01-15T09:00:00Z"
+        remind_at:
+          type: string
+          format: date-time
+          description: Date and time for sending reminder notification
+          example: "2024-01-14T09:00:00Z"
+        recurrence_rule:
+          type: string
+          description: Recurrence pattern in iCal format or custom JSON
+          example: 'RRULE:FREQ=DAILY;INTERVAL=1'
+      required:
+        - title
+
+    UpdateTaskRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          description: Title of the task
+          maxLength: 255
+        description:
+          type: string
+          description: Detailed description of the task
+        completed:
+          type: boolean
+          description: Whether the task is completed
+        priority:
+          type: string
+          description: Priority level of the task
+          enum: [HIGH, MEDIUM, LOW]
+        tags:
+          type: array
+          description: Array of tag strings for categorization
+          items:
+            type: string
+            maxLength: 50
+          maxItems: 10
+        due_date:
+          type: string
+          format: date-time
+          description: Date and time when the task is due
+        remind_at:
+          type: string
+          format: date-time
+          description: Date and time for sending reminder notification
+        recurrence_rule:
+          type: string
+          description: Recurrence pattern in iCal format or custom JSON
+
+    CreateRecurringTaskRequest:
+      allOf:
+        - $ref: '#/components/schemas/CreateTaskRequest'
+        - type: object
+          properties:
+            recurrence_rule:
+              type: string
+              description: Recurrence pattern in iCal format or custom JSON (required for recurring tasks)
+              example: 'RRULE:FREQ=WEEKLY;BYDAY=MO,WE,FR'
+          required:
+            - recurrence_rule
+
+    TriggerEventRequest:
+      type: object
+      properties:
+        eventType:
+          type: string
+          description: Type of event to trigger
+          enum: [task.created, task.updated, task.completed, reminder.scheduled, recurring.task.instance.created]
+        eventData:
+          type: object
+          description: Data payload for the event
+          additionalProperties: true
+      required:
+        - eventType
+        - eventData
+
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+          description: Current page number
+        limit:
+          type: integer
+          description: Number of items per page
+        total:
+          type: integer
+          description: Total number of items
+        pages:
+          type: integer
+          description: Total number of pages
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error code
+        message:
+          type: string
+          description: Error message
+        details:
+          type: object
+          description: Additional error details
+
+  responses:
+    Unauthorized:
+      description: Unauthorized - Invalid or missing authentication token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "unauthorized"
+            message: "Invalid or missing authentication token"
+    Forbidden:
+      description: Forbidden - Insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "forbidden"
+            message: "Insufficient permissions to perform this action"
+    NotFound:
+      description: Not Found - Resource does not exist
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "not_found"
+            message: "The requested resource was not found"
+    BadRequest:
+      description: Bad Request - Invalid request parameters
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "bad_request"
+            message: "One or more parameters are invalid"
+            details:
+              field: "priority"
+              reason: "Must be one of HIGH, MEDIUM, LOW"
+
+tags:
+  - name: Tasks
+    description: Operations related to task management
+  - name: Search
+    description: Search functionality for tasks
+  - name: Recurring Tasks
+    description: Operations for recurring tasks
+  - name: Events
+    description: Event system operations for debugging
