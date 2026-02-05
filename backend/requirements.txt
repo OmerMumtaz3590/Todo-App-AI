@@ -24,6 +24,14 @@ pytest
 pytest-cov
 httpx
 
+# AI/Agent (Phase III)
+openai-agents
+openai
+
 # Development
 black
 flake8
+
+# Dapr (Phase V - Event-Driven Architecture)
+dapr==1.11.0
+dapr-ext-fastapi==1.11.0

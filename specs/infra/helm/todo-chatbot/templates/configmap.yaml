@@ -1,0 +1,15 @@
+{{/*
+Kubernetes ConfigMap for non-sensitive configuration
+*/}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "todo-chatbot.configMapName" . }}
+  labels:
+    {{- include "todo-chatbot.labels" . | nindent 4 }}
+data:
+  APP_NAME: {{ .Values.config.appName | quote }}
+  DEBUG: {{ .Values.config.debug | quote }}
+  ALGORITHM: {{ .Values.config.algorithm | quote }}
+  ACCESS_TOKEN_EXPIRE_MINUTES: {{ .Values.config.accessTokenExpireMinutes | quote }}
+  CORS_ORIGINS: {{ .Values.config.corsOrigins | quote }}

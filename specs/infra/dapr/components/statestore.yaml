@@ -1,0 +1,29 @@
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: todo-statestore
+  namespace: todo-app
+spec:
+  type: state.postgresql
+  version: v1
+  metadata:
+  - name: connectionString
+    secretKeyRef:
+      name: postgresql-connection-string
+      key: connectionUrl
+  - name: version
+    value: "14"
+  - name: maxConns
+    value: "100"
+  - name: table
+    value: "dapr_state_store"
+  - name: schema
+    value: "public"
+  - name: actorStateStore
+    value: "true"
+  - name: concurrency
+    value: "first-write"
+  - name: order
+    value: "fifo"
+auth:
+  secretStore: kubernetes
